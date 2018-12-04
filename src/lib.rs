@@ -23,8 +23,8 @@
 //!
 //! [`f3`]: https://docs.rs/f3/~0.6
 
-#![deny(missing_docs)]
-#![deny(warnings)]
+// #![deny(missing_docs)]
+// #![deny(warnings)]
 #![no_std]
 
 extern crate cast;
@@ -34,6 +34,7 @@ extern crate nb;
 pub extern crate stm32f30x;
 extern crate void;
 
+pub mod advanced_timer;
 pub mod delay;
 pub mod flash;
 pub mod gpio;

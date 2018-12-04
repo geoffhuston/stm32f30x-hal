@@ -40,6 +40,9 @@ pub struct Rcc {
     pub apb2: APB2,
     /// Clock configuration
     pub cfgr: CFGR,
+
+    /// Configuration 3
+    pub cfgr3: CFGR3,
 }
 
 /// AMBA High-performance Bus (AHB) registers
