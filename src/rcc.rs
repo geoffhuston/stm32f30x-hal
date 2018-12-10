@@ -20,6 +20,7 @@ impl RccExt for RCC {
             ahb: AHB { _0: () },
             apb1: APB1 { _0: () },
             apb2: APB2 { _0: () },
+            cfgr3: CFGR3 { _0: () },
             cfgr: CFGR {
                 hclk: None,
                 pclk1: None,
@@ -41,8 +42,18 @@ pub struct Rcc {
     /// Clock configuration
     pub cfgr: CFGR,
 
-    /// Configuration 3
+    /// Configuration Register 3
     pub cfgr3: CFGR3,
+}
+
+pub struct CFGR3 {
+    _0: (),
+}
+
+impl CFGR3 {
+    pub(crate) fn get(&mut self) -> &rcc::CFGR3 {
+        unsafe { &(*RCC::ptr()).cfgr3 }
+    }
 }
 
 /// AMBA High-performance Bus (AHB) registers
@@ -145,6 +156,7 @@ impl CFGR {
 
     /// Freezes the clock configuration, making it effective
     pub fn freeze(self, acr: &mut ACR) -> Clocks {
+
         let pllmul = (2 * self.sysclk.unwrap_or(HSI)) / HSI;
         let pllmul = cmp::min(cmp::max(pllmul, 2), 16);
         let pllmul_bits = if pllmul == 2 {
@@ -227,8 +239,14 @@ impl CFGR {
 
             rcc.cfgr.write(|w| unsafe { w.pllmul().bits(pllmul_bits) });
 
-            rcc.cr.write(|w| w.pllon().set_bit());
+            // TODO[GH]: Test after I get the SMT parts
 
+            // rcc.cr.write(|w| w.hseon().set_bit());
+            // while rcc.cr.read().hserdy().bit_is_clear() {}
+
+            // rcc.cfgr.write(|w| w.pllsrc().set_bit());
+
+            rcc.cr.write(|w| w.pllon().set_bit());
             while rcc.cr.read().pllrdy().bit_is_clear() {}
 
             // SW: PLL selected as system clock
