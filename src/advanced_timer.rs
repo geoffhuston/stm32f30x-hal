@@ -43,7 +43,7 @@ impl AdvancedTimer<TIM1> {
         });
 
         timer.tim.dier.write(|w| {
-            w.uie().set_bit()
+            w.cc1ie().set_bit()
         });
 
         timer.tim.rcr.write(|w| unsafe {
