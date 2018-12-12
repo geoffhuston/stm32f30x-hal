@@ -28,6 +28,20 @@ impl AdvancedTimer<TIM1> {
         //     unsafe { w.oc1m().bits(0b011) }
         // );
 
+        timer.tim.ccer.write(|w|
+            w.cc1e().set_bit()
+             .cc1ne().clear_bit()
+        );
+
+        timer.tim.bdtr.write(|w|
+            w.moe().set_bit()
+             .ossr().clear_bit()
+        );
+
+        timer.tim.ccmr1_output.write(|w| unsafe {
+            w.oc1m().bits(0b0011)
+        });
+
         timer.tim.dier.write(|w| {
             w.uie().set_bit()
         });
@@ -43,7 +57,6 @@ impl AdvancedTimer<TIM1> {
         timer.tim.cr1.write(|w| {
             w.dir().set_bit() // Direction: Downcown
              // .urs().set_bit() // Update Request Source: Only counter overflow/underflow
-             .cen().set_bit() // Counter Enable
              .arpe().set_bit() // Counter auto-reload buffer
         });
 
@@ -52,5 +65,11 @@ impl AdvancedTimer<TIM1> {
         });
 
         timer
+    }
+
+    pub fn enable(&self) {
+        self.tim.cr1.write(|w| {
+             w.cen().set_bit() // Counter Enable
+        });
     }
 }
