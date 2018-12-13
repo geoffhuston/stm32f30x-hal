@@ -72,4 +72,12 @@ impl AdvancedTimer<TIM1> {
              w.cen().set_bit() // Counter Enable
         });
     }
+
+    pub fn clear_cc1_interrupt() {
+        unsafe {
+            (*TIM1::ptr()).sr.write(|w|
+                w.cc1if().clear_bit()
+            );
+        }
+    }
 }
