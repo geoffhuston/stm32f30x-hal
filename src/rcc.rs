@@ -154,6 +154,56 @@ impl CFGR {
         self
     }
 
+    pub fn freeze2(self, acr: &mut ACR) {
+        let rcc = unsafe { &*RCC::ptr() };
+
+        unsafe {
+            acr.acr().write(|w|
+                w.latency().bits(0b010)
+            );
+        }
+
+        rcc.cr.write(|w| unsafe {
+            w.hsion().set_bit()
+             .hsitrim().bits(0x10)
+        });
+
+        rcc.cr.write(|w| w.pllon().clear_bit());
+        while rcc.cr.read().pllrdy().bit_is_set() {}
+
+        // rcc.cfgr.write(|w| unsafe { w.pllmul().bits(pllmul_bits) });
+        rcc.cfgr.write(|w| unsafe {
+            w.pllmul().bits(0b1110)
+             .pllsrc().clear_bit()
+        });
+
+        rcc.cr.write(|w| w.pllon().set_bit());
+        while rcc.cr.read().pllrdy().bit_is_clear() {}
+
+        rcc.cfgr.write(|w| unsafe {
+            w.mco().bits(0b111)
+        });
+
+        rcc.cfgr.write(|w| unsafe {
+            w.sw().bits(0x02)
+        });
+
+        while rcc.cfgr.read().sw().bits() != 0b10 {}
+
+        // SW: PLL selected as system clock
+        rcc.cfgr.modify(|_, w| unsafe {
+            w.ppre2().bits(0)
+             .ppre1().bits(0b100)
+             .hpre().bits(0)
+        });
+
+        // TODO[GH]: Make this configurable
+        rcc.cfgr.write(|w| unsafe {
+            w.mco().bits(0b100)
+        });
+            
+    }
+
     /// Freezes the clock configuration, making it effective
     pub fn freeze(self, acr: &mut ACR) -> Clocks {
 
@@ -237,7 +287,6 @@ impl CFGR {
         if let Some(pllmul_bits) = pllmul_bits {
             // use PLL as source
 
-            rcc.cfgr.write(|w| unsafe { w.pllmul().bits(pllmul_bits) });
 
             // TODO[GH]: Test after I get the SMT parts
 
@@ -246,20 +295,40 @@ impl CFGR {
 
             // rcc.cfgr.write(|w| w.pllsrc().set_bit());
 
+            rcc.cr.write(|w| unsafe {
+                w.hsion().set_bit()
+                 .hsitrim().bits(0x10)
+            });
+
+
+            // rcc.cfgr.write(|w| unsafe { w.pllmul().bits(pllmul_bits) });
+            rcc.cfgr.write(|w| unsafe {
+                w.pllmul().bits(0b1110)
+                 .pllsrc().clear_bit()
+            });
+
             rcc.cr.write(|w| w.pllon().set_bit());
             while rcc.cr.read().pllrdy().bit_is_clear() {}
 
+            rcc.cfgr.write(|w| unsafe {
+                w.sw().bits(0x02)
+            });
+
+            while rcc.cfgr.read().sw().bits() != 0b10 {}
+
             // SW: PLL selected as system clock
             rcc.cfgr.modify(|_, w| unsafe {
-                w.ppre2()
-                    .bits(ppre2_bits)
-                    .ppre1()
-                    .bits(ppre1_bits)
-                    .hpre()
-                    .bits(hpre_bits)
-                    .sw()
-                    .bits(0b10)
+                w.ppre2().bits(0)
+                 .ppre1().bits(0b100)
+                 .hpre().bits(0)
             });
+
+            // TODO[GH]: Make this configurable
+            rcc.cfgr.write(|w| unsafe {
+                w.mco().bits(0b111)
+                //  .mcopre().bits(0)
+            });
+
         } else {
             // use HSI as source
 
